@@ -1,0 +1,60 @@
+name: Build and Package foo_resume
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout foo_resume
+      uses: actions/checkout@v4
+      with:
+        path: foo_resume
+
+    - name: Checkout SDK
+      uses: actions/checkout@v4
+      with:
+        repository: reda777/fb2k-sdk
+        path: sdk
+        token: ${{ secrets.SDK_TOKEN }}
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Create Out Directory
+      run: mkdir out
+    # ------------------------
+
+    - name: Build x86
+      working-directory: foo_resume
+      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x86 /p:PlatformToolset=v143
+
+    - name: Build x64
+      working-directory: foo_resume
+      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: out/foo_resume.fb2k-component
+        tag_name: v1.0
+        name: Release v1.0
+        body: "Initial release of foo_resume."
+        draft: false
+        prerelease: false
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: foo_resume-package
+        path: out/foo_resume.fb2k-component

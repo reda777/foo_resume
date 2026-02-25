@@ -8,7 +8,7 @@ A lightweight foobar2000 component that automatically remembers and resumes the 
 * Stores data in a simple text file within your foobar2000 profile folder.
 
 ## Installation
-1. Download the latest `foo_resume.fb2k-component` from the [Releases]() page.
+1. Download the latest `foo_resume.fb2k-component` from the [Releases](https://github.com/reda777/foo_resume/releases) page.
 2. Install the component using one of the following methods:
    * **Double-click** the `foo_resume.fb2k-component` file.
    * **Drag and drop** the file into the **File -> Preferences -> Components** window.
