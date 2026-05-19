@@ -9,7 +9,7 @@
 
 DECLARE_COMPONENT_VERSION(
     "foo_resume",
-    "1.0.0",
+    "1.0.1",
     "Remembers playback position per track and resumes from where you left off.\n\n"
     "To enable or disable: Preferences -> Advanced -> Tools -> foo_resume.\n\n"
     "Built by reda777"
@@ -89,6 +89,7 @@ static bool      g_has_current   = false;
 static double    g_current_pos   = 0.0;
 static bool      g_pending_seek  = false;
 static double    g_expected_seek = 0.0;
+static double    g_current_length = 0.0;
 
 // ─── Config path ────────────────────────────────────────────────
 
@@ -222,11 +223,17 @@ public:
         init_config_path();
         load_positions();
 
-        // Save previous track position, but not if a seek is still pending
-        if (g_has_current && !g_pending_seek && g_current_pos > kMinResumeTime) {
-            g_positions[g_current_key] = {g_current_pos, ++g_access_counter};
-            prune_if_needed();
-            g_dirty = true;
+        if (g_has_current && !g_pending_seek) {
+            bool completed = g_current_length > 0.0 &&
+                            g_current_pos >= (g_current_length - 2.0);
+            if (completed) {
+                g_positions.erase(g_current_key);
+                g_dirty = true;
+            } else if (g_current_pos > kMinResumeTime) {
+                g_positions[g_current_key] = {g_current_pos, ++g_access_counter};
+                prune_if_needed();
+                g_dirty = true;
+            }
         }
 
         const playable_location& loc = p_track->get_location();
@@ -235,6 +242,7 @@ public:
         g_current_pos         = 0.0;
         g_has_current         = true;
         g_pending_seek        = false;
+        g_current_length      = p_track->get_length();
 
         auto it = g_positions.find(g_current_key);
         if (it != g_positions.end()) {
