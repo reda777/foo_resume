@@ -44,9 +44,9 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: out/foo_resume.fb2k-component
-        tag_name: v1.0
-        name: Release v1.0
-        body: "Initial release of foo_resume."
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: "Fixed: Tracks played to completion in the middle of a playlist were being saved at their last second and incorrectly resuming near the end on next play. Completed tracks are now properly removed from the resume file."
         draft: false
         prerelease: false
         make_latest: true
