@@ -15,7 +15,7 @@ A lightweight foobar2000 component that automatically remembers and resumes the 
    * Open **File -> Preferences -> Components**, click the **Install...** button, and select the file.
 
 ## Configuration
-To enable or disable the component:
+To enable or disable the component or to change minmum track length (set to 5 min by default):
 * Navigate to **File -> Preferences -> Advanced -> Tools -> foo_resume**.
 
 ## Build Instructions
