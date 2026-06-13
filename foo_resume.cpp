@@ -8,7 +8,7 @@
 
 DECLARE_COMPONENT_VERSION(
     "foo_resume",
-    "1.1.0-alpha1",
+    "1.1.0-alpha2",
     "Remembers playback position per track and resumes from where you left off.\n\n"
     "To enable or disable: Preferences -> Advanced -> Tools -> foo_resume.\n\n"
     "Built by reda777"
@@ -168,9 +168,9 @@ static void save_positions() {
                 for (const auto& kv : g_positions) {
                     pfc::string_formatter line;
                     line << kv.first.path.c_str()
-                        << '\t' << kv.first.subsong
-                        << '\t' << pfc::format_float(kv.second.position, 0, 3)
-                        << '\n';
+                        << "\t" << kv.first.subsong
+                        << "\t" << pfc::format_float(kv.second.position, 0, 3)
+                        << "\n";
                     f->write(line.c_str(), line.length(), fb2k::noAbort);
                     if (++count >= kMaxEntries) break;
                 }
