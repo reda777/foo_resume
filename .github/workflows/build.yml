@@ -50,11 +50,11 @@ jobs:
 
     - name: Build x86
       working-directory: foo_resume
-      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x86 /p:PlatformToolset=v143
+      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x86 /p:PlatformToolset=v143 /p:VCToolsVersion=14.51.36231
 
     - name: Build x64
       working-directory: foo_resume
-      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /p:VCToolsVersion=14.51.36231
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
