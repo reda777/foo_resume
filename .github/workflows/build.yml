@@ -29,13 +29,20 @@ jobs:
       uses: microsoft/setup-msbuild@v2
     
     - name: Install ATL
-      shell: cmd
+      shell: pwsh
       run: |
-        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify ^
-          --installPath "C:\Program Files\Microsoft Visual Studio\18\Enterprise" ^
-          --add Microsoft.VisualStudio.Component.VC.ATL ^
-          --add Microsoft.VisualStudio.Component.VC.ATL.ARM64 ^
-          --quiet --norestart --force
+        $vsWhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+        $vsPath = & $vsWhere -latest -property installationPath
+        Write-Host "VS install path: $vsPath"
+        
+        $installer = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe"
+        $process = Start-Process -FilePath $installer -ArgumentList "modify","--installPath","$vsPath","--add","Microsoft.VisualStudio.Component.VC.ATL","--quiet","--norestart","--force" -Wait -PassThru
+        Write-Host "Exit code: $($process.ExitCode)"
+        
+        $atlPath = "$vsPath\VC\Tools\MSVC"
+        $found = Get-ChildItem -Path $atlPath -Recurse -Filter "atlbase.h" -ErrorAction SilentlyContinue
+        if ($found) { Write-Host "ATL found: $($found.FullName)" }
+        else { Write-Host "ATL NOT found after install" }
 
     - name: Create Out Directory
       run: mkdir out
