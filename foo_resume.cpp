@@ -2,13 +2,15 @@
 #include <foobar2000/helpers/helpers.h>
 #include <map>
 #include <string>
-#include <cmath>
 #include <algorithm>
 #include <sstream>
+#include <cstring>
+#include <string_view>
+#include <charconv>
 
 DECLARE_COMPONENT_VERSION(
     "foo_resume",
-    "1.1.0-alpha2",
+    "1.1.0",
     "Remembers playback position per track and resumes from where you left off.\n\n"
     "To enable or disable: Preferences -> Advanced -> Tools -> foo_resume.\n\n"
     "Built by reda777"
@@ -56,7 +58,6 @@ static advconfig_integer_factory g_advconfig_min_time(
 static constexpr double   kMinResumeTime = 10.0;
 static constexpr size_t   kMaxEntries    = 5000;
 static constexpr uint64_t kDebounceMs    = 7000;
-static constexpr double   kSeekTolerance = 0.05;
 
 // ─── Data structures ────────────────────────────────────────────
 
@@ -132,35 +133,49 @@ static void load_positions() {
 
         while (std::getline(stream, line)) {
             if (!line.empty() && line.back() == '\r') line.pop_back();
-            if (line.empty() || line[0] == '#') continue;
 
-            size_t p1 = line.find('\t');
-            if (p1 == std::string::npos) continue;
-            size_t p2 = line.find('\t', p1 + 1);
-            if (p2 == std::string::npos) continue;
+            std::string_view line_view = line;
 
-            try {
-                track_key key;
-                key.path = line.substr(0, p1);
-                key.subsong = static_cast<t_uint32>(
-                    std::stoul(line.substr(p1 + 1, p2 - p1 - 1)));
-                double pos = std::stod(line.substr(p2 + 1));
-                g_positions[key] = { pos, ++g_access_counter };
+            size_t p1 = line_view.find('\t');
+            if (p1 == std::string_view::npos) continue;
+
+            size_t p2 = line_view.find('\t', p1 + 1);
+            if (p2 == std::string_view::npos) continue;
+
+            track_key key;
+            key.path = line_view.substr(0, p1); 
+
+            std::string_view subsong_str = line_view.substr(p1 + 1, p2 - p1 - 1);
+            std::string_view pos_str = line_view.substr(p2 + 1);
+
+            auto subsong_result = std::from_chars(subsong_str.data(), subsong_str.data() + subsong_str.size(), key.subsong);
+            if (subsong_result.ec != std::errc()) continue;
+
+            double pos = 0.0;
+
+            auto pos_result = std::from_chars(pos_str.data(), pos_str.data() + pos_str.size(), pos);
+
+            if (pos_result.ec != std::errc() || 
+                pos_result.ptr != pos_str.data() + pos_str.size()) 
+            {
+                continue; 
             }
-            catch (...) {}
+
+            g_positions[key] = { pos, ++g_access_counter };
         }
     }
-    catch (...) {}
+    catch (...) {
+        FB2K_console_formatter() << "foo_resume: load failed";
+    }
 }
 
 // ─── Save ───────────────────────────────────────────────────────
 
 static void save_positions() {
-    const double minTime = (double)g_advconfig_min_time.get();
     try {
         filesystem::get(g_config_path.c_str())->rewrite_file(
             g_config_path.c_str(), fb2k::noAbort, 5.0,
-            [minTime](file::ptr f) {
+            [](file::ptr f) {
                 const char header[] = "# foo_resume v1\n";
                 f->write(header, strlen(header), fb2k::noAbort);
 
@@ -286,8 +301,7 @@ namespace {
         void on_playback_seek(double t) override {
             if (!g_has_current) return;
             g_current_pos = t;
-            if (g_pending_seek && std::abs(t - g_expected_seek) < kSeekTolerance)
-                g_pending_seek = false;
+            g_pending_seek = false;
         }
 
         void on_playback_starting(play_control::t_track_command, bool) override {}
