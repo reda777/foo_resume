@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
     - name: Checkout foo_resume
@@ -27,22 +27,6 @@ jobs:
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
-    
-    - name: Install ATL
-      shell: pwsh
-      run: |
-        $vsWhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-        $vsPath = & $vsWhere -latest -property installationPath
-        Write-Host "VS install path: $vsPath"
-        
-        $installer = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe"
-        $process = Start-Process -FilePath $installer -ArgumentList "modify","--installPath","$vsPath","--add","Microsoft.VisualStudio.Component.VC.ATL","--quiet","--norestart","--force" -Wait -PassThru
-        Write-Host "Exit code: $($process.ExitCode)"
-        
-        $atlPath = "$vsPath\VC\Tools\MSVC"
-        $found = Get-ChildItem -Path $atlPath -Recurse -Filter "atlbase.h" -ErrorAction SilentlyContinue
-        if ($found) { Write-Host "ATL found: $($found.FullName)" }
-        else { Write-Host "ATL NOT found after install" }
 
     - name: Create Out Directory
       run: mkdir out
@@ -50,11 +34,11 @@ jobs:
 
     - name: Build x86
       working-directory: foo_resume
-      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x86 /p:PlatformToolset=v143 /p:VCToolsVersion=14.51.36231
+      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x86 /p:PlatformToolset=v143
 
     - name: Build x64
       working-directory: foo_resume
-      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /p:VCToolsVersion=14.51.36231
+      run: msbuild foo_resume.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
